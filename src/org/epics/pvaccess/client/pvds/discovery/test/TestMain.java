@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.epics.pvaccess.client.pvds;
+package org.epics.pvaccess.client.pvds.discovery.test;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.epics.pvaccess.client.pvds.Protocol.EntityId;
 import org.epics.pvaccess.client.pvds.Protocol.GUID;
 import org.epics.pvaccess.client.pvds.Protocol.GUIDPrefix;
+import org.epics.pvaccess.client.pvds.discovery.DiscoveryDataSet;
+import org.epics.pvaccess.client.pvds.discovery.DiscoveryServiceImpl;
 import org.epics.pvaccess.client.pvds.util.StringToByteArraySerializator;
 
 /**
@@ -49,5 +51,25 @@ public class TestMain {
 					dataSet,
 					StringToByteArraySerializator.INSTANCE
 				);
+			
+/*
+	    // starts from 1
+	    int changeCount = 1;
+	    int entitiesCount = 1000;
+	    BloomFilter<String> filter = new BloomFilter<String>(StringToByteArraySerializator.INSTANCE, 8, 1024);
+	    for (int i = 0; i < entitiesCount; i++)
+	    	filter.add(String.valueOf(i));
+	    transmitter.addAnnounceSubmessage(changeCount, unicastEndpoint, entitiesCount, filter);
+	    
+	    ByteBuffer buffer = transmitter.getBuffer();
+	    
+	    HexDump.hexDump("announce", buffer.array(), 0, buffer.position());
+	    
+	    RTPSMessageReceiver rtpsReceiver = new RTPSMessageReceiver();
+	    
+	    buffer.flip();
+	    boolean successfulyProcessed = rtpsReceiver.processMessage(buffer);
+	    System.out.println("successfulyProcessed: " + successfulyProcessed);
+ */
 	}
 }

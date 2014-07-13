@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.epics.pvaccess.client.pvds;
+package org.epics.pvaccess.client.pvds.discovery;
 
 import java.util.Set;
 

@@ -8,47 +8,50 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.UUID;
+
+import org.epics.pvdata.misc.BitSet;
 
 /**
  * @author msekoranja
  *
  */
-public interface Protocol {
+public class Protocol {
 
 	
 	/**
 	 * Protocol ID.
 	 * @author msekoranja
 	 */
-	static class ProtocolId {
+	public static class ProtocolId {
 		// octet[4]
 		//public static final byte[] VALUE = { 0x70, 0x76, 0x44, 0x53 }; 	// pvDS
 		//public static final byte[] RTPS_VALUE = { 0x52, 0x54, 0x50, 0x53 }; 	// RTPS
 
-		public static final int VALUE = 0x70764453; 	// pvDS
-		public static final int RTPS_VALUE = 0x52545053; 	// RTPS
+		public static final int PVDS_VALUE = 0x70764453; 	// pvDS
+		//public static final int RTPS_VALUE = 0x52545053; 	// RTPS
 	}
 	
 	/**
 	 * Protocol version.
 	 * @author msekoranja
 	 */
-	static class ProtocolVersion {
+	public static class ProtocolVersion {
 		// octet major, octet minor
 		//public static final byte[] PROTOCOLVERSION_2_1 = { 2, 1 };
 		
 		public static final short PROTOCOLVERSION_2_1 = 0x0201;
 	}
 
-	static class VendorId {
+	public static class VendorId {
 		// octet[2]
 		//private final byte[] value = new byte[2];
 		//public static final byte[] VENDORID_UNKNOWN = { 0, 0 };
 
 		public static final short VENDORID_UNKNOWN = 0x0000;
 		
-		public static final short PVDS_VENDORID = 0x01CA;		// ficional; not confirmed by OMG
+		public static final short PVDS_VENDORID = 0x01CA;		// fictional; not confirmed by OMG
 	}
 
 	/**
@@ -56,7 +59,7 @@ public interface Protocol {
 	 * GUID consists of 12-byte prefix and 4-byte EntityId (process-wide unique).
 	 * @author msekoranja
 	 */
-	static class GUIDPrefix {
+	public static class GUIDPrefix {
 		// octet[12]
 		public final byte[] value;
 		
@@ -84,29 +87,27 @@ public interface Protocol {
 		}
 		
 	}
-	
-	public static final int PARTICIPANTID_MAX = 119;
-	
-	static class EntityId {
+
+	public static class EntityId {
 		// octet[3] entityKey, octet entityKind
 		//private final byte[] value = new byte[4];
 		//public static final byte[] ENTITYID_UNKNOWN = { 0, 0, 0, 0 };
 		
-		private final int value;
+		public final int value;
 		
 		
 		// first two MSB
-		private static byte ENTITYKIND_USERDEFINED_MASK = 0x00;
-		private static byte ENTITYKIND_BUILDIN_MASK = (byte)0xc0;
-		private static byte ENTITYKIND_VENDORSPECIFIC_MASK = 0x40;
+		public static byte ENTITYKIND_USERDEFINED_MASK = 0x00;
+		public static byte ENTITYKIND_BUILDIN_MASK = (byte)0xc0;
+		public static byte ENTITYKIND_VENDORSPECIFIC_MASK = 0x40;
 		
 		// last 6 LSB
-		private static byte ENTITYKIND_UNKNOWN_MASK = 0x00;
-		private static byte ENTITYKIND_PARTICIPANT_MASK = 0x01;	// always build-in
-		private static byte ENTITYKIND_WRITER_MASK = 0x02;
-		private static byte ENTITYKIND_WRITERKEY_MASK = 0x03;
-		private static byte ENTITYKIND_READER_MASK = 0x04;
-		private static byte ENTITYKIND_READERKEY_MASK = 0x07;
+		public static byte ENTITYKIND_UNKNOWN_MASK = 0x00;
+		public static byte ENTITYKIND_PARTICIPANT_MASK = 0x01;	// always build-in
+		public static byte ENTITYKIND_WRITER_MASK = 0x02;
+		public static byte ENTITYKIND_WRITERKEY_MASK = 0x03;
+		public static byte ENTITYKIND_READER_MASK = 0x04;
+		public static byte ENTITYKIND_READERKEY_MASK = 0x07;
 
 		private EntityId(int entityKey, byte entityKind)
 		{
@@ -120,18 +121,19 @@ public interface Protocol {
 		
 		public static EntityId generateParticipantEntityId(int participantId)
 		{
-			if (participantId > PARTICIPANTID_MAX)
-				throw new IllegalArgumentException("participantId > PARTICIPANTID_MAX");
+			if (participantId > MAX_PARTICIPANT_ID)
+				throw new IllegalArgumentException("participantId > MAX_PARTICIPANT_ID");
 			
 			return new EntityId(participantId,
 					(byte)(ENTITYKIND_BUILDIN_MASK | ENTITYKIND_PARTICIPANT_MASK));
 		}
+		
 	}
 	
-	static class GUID
+	public static class GUID
 	{
-		private final GUIDPrefix prefix;
-		private final EntityId entityId;
+		public final GUIDPrefix prefix;
+		public final EntityId entityId;
 
 		/**
 		 * @param prefix
@@ -149,18 +151,18 @@ public interface Protocol {
 	// MTU UDP 1440 (w/ IPSEC)
 	
 	public static final long HEADER_NO_GUID =
-		(long)ProtocolId.VALUE << 32 |
+		(long)ProtocolId.PVDS_VALUE << 32 |
 		ProtocolVersion.PROTOCOLVERSION_2_1 << 16 |
 		VendorId.PVDS_VENDORID;
 /*	
-	static class Message {
+	public static class Message {
 		ProtocolId pi;
 		ProtocolVersion pv;
 		VendorId vi;
 		GUIDPrefix gp;
 	}
 
-	static class SubmessageHeader {
+	public static class SubmessageHeader {
 		byte submessageId;	// Submessages with ID's 0x80 to 0xff (inclusive) are vendor-specific;
 		byte flags;	// LSB = endian 	// E = SubmessageHeader.flags & 0x01 (0 = big, 1 = little)
 		ushort octetsToNextHeader;
@@ -173,8 +175,47 @@ In case octetsToNextHeader > 0, it is the number of octets from the first octet 
 In case octetsToNextHeader==0 and the kind of Submessage is NOT PAD or INFO_TS, the Submessage is the last Submessage in the Message and extends up to the end of the Message. This makes it possible to send Submessages larger than 64k (the size that can be stored in the octetsToNextHeader field), provided they are the last Submessage in the Message.
 In case the octetsToNextHeader==0 and the kind of Submessage is PAD or INFO_TS, the next Submessage header starts immediately after the current Submessage header OR the PAD or INFO_TS is the last Submessage in the Message.
 */
+	public static final int RTPS_HEADER_SIZE = 20;
+	public static final int RTPS_SUBMESSAGE_ALIGNMENT = 4;
+	public static final int RTPS_SUBMESSAGE_HEADER_SIZE = 4;
+	public static final int RTPS_SUBMESSAGE_SIZE_MIN = 8;
 	
-	static class Locator
+	public static final int MAX_DOMAIN_ID = 232;
+	public static final int MAX_PARTICIPANT_ID = 119;
+
+	// TODO this collides with RTPS
+	public static final int PB = 7400;
+	public static final int DG = 250;
+	public static final int PG = 2;
+	public static final int d0 = 0;
+	public static final int d1 = 10;
+	public static final int d2 = 1;
+	public static final int d3 = 11;
+	
+	public static class SubmessageHeader {
+
+	    public static final byte RTPS_PAD            = 0x01;
+	    public static final byte RTPS_ACKNACK        = 0x06;
+	    public static final byte RTPS_HEARTBEAT      = 0x07;
+	    public static final byte RTPS_GAP            = 0x08;
+	    public static final byte RTPS_INFO_TS        = 0x09;
+	    public static final byte RTPS_INFO_SRC       = 0x0c;
+	    public static final byte RTPS_INFO_REPLY_IP4 = 0x0d;
+	    public static final byte RTPS_INFO_DST       = 0x0e;
+	    public static final byte RTPS_INFO_REPLY     = 0x0f;
+	    public static final byte RTPS_NACK_FRAG      = 0x12;
+	    public static final byte RTPS_HEARTBEAT_FRAG = 0x13;
+	    public static final byte RTPS_DATA 	  	     = 0x15;
+	    public static final byte RTPS_DATA_FRAG      = 0x16;
+	    
+	    // Submessages with ID's 0x80 to 0xff (inclusive) are vendor-specific
+	    public static final byte PVDS_ANNOUNCE    	 = (byte)0x80;
+	    public static final byte PVDS_SHUTDOWN    	 = (byte)0x81;
+	    public static final byte PVDS_ACK	    	 = (byte)0x82;
+		
+	}
+	
+	public static class Locator
 	{
 		static final public int LOCATOR_ADDRESS_SIZE = 16;
 		
@@ -228,8 +269,105 @@ In case the octetsToNextHeader==0 and the kind of Submessage is PAD or INFO_TS, 
 			buffer.putInt(port);	// unsigned, well we do not expect ports above 65535 limit
 			buffer.put(address);	// TODO is this fixed to 16-bytes!!! yet it is
 		}
-		
 	}
 	
+	/**
+     * Communicates the state of the reader to the writer.
+     * All sequence numbers up to the one prior to readerSNState.base
+     * are confirmed as received by the reader.
+     * The sequence numbers that appear in the set indicate missing sequence numbers on the reader side.
+     * The ones that do not appear in the set are undetermined (could be received or not).
+     */
+    public static class SequenceNumberSet
+    {
+    	public long bitmapBase;
+    	public final BitSet bitmap = new BitSet(256);
+    	
+    	public void reset(long bitmapBase)
+    	{
+    		bitmap.clear();
+    		this.bitmapBase = bitmapBase;
+    	}
+    	
+    	public void set(long seqNo)
+    	{
+    		long diff = seqNo - bitmapBase;
+    		if (diff < 0 || diff > 255)
+    			throw new IllegalArgumentException("!(0 <= (seqNo - bitmapBase) < 256)");
+    		bitmap.set((int)diff);
+    	}
+
+    	// TODO error handling
+    	public void serialize(ByteBuffer buffer)
+		{
+    		buffer.putLong(bitmapBase);
+    		
+    		int bitsInUse = bitmap.length();
+		    // unsigned int, but limited to max 256
+    		buffer.putInt(bitsInUse);
+
+    		final int M = (bitsInUse + 31) / 32;
+    		long[] bitArray = bitmap.getBitArray();
+    		
+		    ByteOrder endianess = buffer.order();
+		    buffer.order(ByteOrder.BIG_ENDIAN);
+    		
+    		int l = 0;
+    		for (; l < M/2; l++)
+    			buffer.putLong(bitArray[l]);
+    		
+    		if ((M & 1) == 1)
+    			buffer.putInt((int)(bitArray[l] & 0xFFFFFFFF));
+
+    		buffer.order(endianess);
+		}
+    	
+    	// TODO error handling
+    	public boolean deserialize(ByteBuffer buffer)
+    	{
+		    bitmap.clear();
+		    // set last bit to set wordsInUse to max
+		    bitmap.set(255);
+		    
+		    bitmapBase = buffer.getLong();
+		    
+		    if (bitmapBase <= 0)
+		    	return false;
+		    
+		    // unsigned int, but limited to max 256
+		    int bitCount = buffer.getInt();
+		    if (bitCount < 0 || bitCount > 256)
+		    	return false;
+		    
+		    // int count
+		    final int M = (bitCount + 31) / 32;
+    		long[] bitArray = bitmap.getBitArray();
+
+		    ByteOrder endianess = buffer.order();
+		    buffer.order(ByteOrder.BIG_ENDIAN);
+
+    		int l = 0;
+    		for (; l < M/2; l++)
+    			bitArray[l] = buffer.getLong();
+    		
+    		if ((M & 1) == 1)
+    			bitArray[l] = buffer.getInt();
+    		
+    		buffer.order(endianess);
+    		
+    		// clear bit 255 yet not overriden
+    		if (M < 7)
+    			bitmap.clear(255);
+    		
+    		return true;
+    	}
+
+		@Override
+		public String toString() {
+			return "SequenceNumberSet [bitmapBase=" + bitmapBase + ", bitmap="
+					+ bitmap + "]";
+		}
+    	
+    }
 
 }
