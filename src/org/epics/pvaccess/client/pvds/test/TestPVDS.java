@@ -407,7 +407,7 @@ public class TestPVDS {
 	    // "pvMSpvMS"
 	    private static final long FREE_MARK = 0x70764D5370764D53L;
 
-	    // TODO out-of-order or duplciate fragments will recreate buffer
+	    // TODO out-of-order or duplicate fragments will recreate buffer
 	    private FragmentationBufferEntry getFragmentationBufferEntry(long seqNo, int dataSize, int fragmentSize)
 	    {
 	    	FragmentationBufferEntry entry = fragmentTable.get(seqNo);
@@ -595,7 +595,7 @@ public class TestPVDS {
 	    private final ByteBuffer ackBuffer = ByteBuffer.allocate(64);
 	    private boolean ackSNReception(long ackSenNo)
 	    {
-	    	System.out.println(ackSenNo);
+	    	//System.out.println(ackSenNo);
 	    	ackBuffer.clear();
 	    	addMessageHeader(ackBuffer);
 	    	addAckSubmessage(ackBuffer, ackSenNo);
@@ -668,7 +668,7 @@ public class TestPVDS {
 					return false;
 				}
 					
-				// check aligment
+				// check alignment
 				if (buffer.position() % Protocol.RTPS_SUBMESSAGE_ALIGNMENT != 0)
 				{
 					stats.submesssageAlignmentMismatch++;
@@ -770,7 +770,8 @@ public class TestPVDS {
 						lastKnownSequenceNumber = seqNo;
 					else
 					{
-						// might be missing SN, try to remove
+						// missingSequenceNumbers can only contains SN <= lastKnownSequenceNumber
+						// might be a missing SN, try to remove
 						boolean missed = missingSequenceNumbers.remove(seqNo);
 						if (missed)
 							stats.recoveredSN++;
@@ -811,6 +812,10 @@ public class TestPVDS {
 								submessageDataStartPosition + receiver.submessageSize - buffer.position();
 							*/
 							
+							// TODO out-of-order QoS
+							// do not report newData if order QoS is set
+							// wait or throw away older messages
+							
 							newData(buffer);
 						}
 						/*
@@ -823,8 +828,6 @@ public class TestPVDS {
 					}
 					else		// DataFrag
 					{
-						// TODO way to identify dataFrag !!!
-						
 					    // fragmentStartingNum (unsigned integer, starting from 1)
 						int fragmentStartingNum = buffer.getInt();
 
@@ -849,8 +852,12 @@ public class TestPVDS {
 							{
 								if (entry.addFragment(fragmentStartingNum, buffer))
 								{
+									// TODO out-of-order QoS
+									// do not report newData if order QoS is set
+									// wait or throw away older messages
+									
 									newData(entry.buffer);
-									entry.release();
+									entry.release();			// TODO to be called after deserialization
 									break;
 								}
 								fragmentStartingNum++;
@@ -903,14 +910,14 @@ public class TestPVDS {
 								
 								// cancel fragments that will never be completed
 								// FragmentationBufferEntry.seqNo <= lostSN < FragmentationBufferEntry.{seqNo + fragments}
-								// take care of O(n**2) compexity, move out of this loop and use range-lists
+								// take care of O(n**2) complexity, move out of this loop and use range-lists
 								
 								// set ignoreSequenceNumbersPrior to FragmentationBufferEntry.{seqNo + fragments} if
 								// the fragment is part of lost message (see description above) and the oldest fragment
 							}
 							stats.lostSN += lostSNCount;
 
-							// add new available (from firstSN on), missed sequence numbers
+							// add new available (from firstSN on) missed sequence numbers
 							long newMissingSN = 0;
 							for (long sn = Math.max(ignoreSequenceNumbersPrior, Math.max(lastReceivedSequenceNumber + 1, firstSN)); sn <= lastSN; sn++)
 								if (missingSequenceNumbers.add(sn))
@@ -1025,7 +1032,7 @@ public class TestPVDS {
 	    private final Object ackMonitor = new Object();
 	    private void ack(long ackSeqNo)
 	    {
-			System.out.println(ackSeqNo);
+			//System.out.println(ackSeqNo);
 			synchronized (ackMonitor) {
 				receivedCount++;
 				if (receivedCount >= expectedReceivedCount)
@@ -1078,9 +1085,10 @@ public class TestPVDS {
 	    // TODO to be configurable
 
 		// NOTE: Giga means 10^9 (not 1024^3)
-	    double udpTxRateGbitPerSec = Double.valueOf(System.getProperty("RATE", "0.96")); // TODO !!
+	    final double udpTxRateGbitPerSec = Double.valueOf(System.getProperty("RATE", "0.96")); // TODO !!
 	    final int MESSAGE_ALIGN = 32;
-	    final int MAX_PACKET_SIZE_BYTES = (8000 / MESSAGE_ALIGN) * MESSAGE_ALIGN;
+	    final int MAX_PACKET_SIZE_BYTES_CONF = Integer.valueOf(System.getProperty("SIZE", "8000"));
+	    final int MAX_PACKET_SIZE_BYTES = (MAX_PACKET_SIZE_BYTES_CONF / MESSAGE_ALIGN) * MESSAGE_ALIGN;
 	    long delay_ns = (long)(MAX_PACKET_SIZE_BYTES * 8 / udpTxRateGbitPerSec);
 	
 	    // TODO configurable
