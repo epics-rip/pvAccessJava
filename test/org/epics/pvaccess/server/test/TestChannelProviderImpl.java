@@ -54,6 +54,7 @@ import org.epics.pvaccess.server.test.helpers.PVTopStructure;
 import org.epics.pvaccess.server.test.helpers.PVTopStructure.PVTopStructureListener;
 import org.epics.pvaccess.server.test.helpers.RPCTopStructure;
 import org.epics.pvdata.factory.ConvertFactory;
+import org.epics.pvdata.factory.StandardFieldFactory;
 import org.epics.pvdata.misc.BitSet;
 import org.epics.pvdata.misc.ThreadPriority;
 import org.epics.pvdata.misc.Timer;
@@ -71,6 +72,8 @@ import org.epics.pvdata.pv.PVDoubleArray;
 import org.epics.pvdata.pv.PVField;
 import org.epics.pvdata.pv.PVScalarArray;
 import org.epics.pvdata.pv.PVStructure;
+import org.epics.pvdata.pv.PVUInt;
+import org.epics.pvdata.pv.Scalar;
 import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.Status;
 import org.epics.pvdata.pv.Status.StatusType;
@@ -1156,7 +1159,8 @@ public class TestChannelProviderImpl implements ChannelProvider
 			"valueOnly",
 			"arrayDouble",
 			"sum",
-			"testAny"
+			"testAny",
+			"testUInt"
 	};
 	
 	private static Set<String> HOSTED_CHANNELS_SET = 
@@ -1246,6 +1250,16 @@ public class TestChannelProviderImpl implements ChannelProvider
 		else if (channelName.equals("testAny"))
 		{
 			retVal = new ChangingVariantUnionTopStructure(1.0, timer);
+		}
+		else if (channelName.equals("testUInt"))
+		{
+			Field field = 
+					StandardFieldFactory.getStandardField().
+						scalar(
+								ScalarType.pvUInt,
+								"value,timeStamp");
+			retVal = new PVTopStructure(pvDataCreate.createPVStructure((Structure)field));
+			((PVUInt)retVal.getPVStructure().getSubField("value")).put(1);
 		}
 		// else if (channelName.startsWith("test"))	// double scalar
 		else

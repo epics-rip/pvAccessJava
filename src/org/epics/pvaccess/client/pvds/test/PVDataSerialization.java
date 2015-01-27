@@ -1,5 +1,9 @@
 package org.epics.pvaccess.client.pvds.test;
 
+import java.nio.ByteBuffer;
+
+import org.epics.pvaccess.PVFactory;
+import org.epics.pvdata.pv.DeserializableControl;
 import org.epics.pvdata.pv.Field;
 import org.epics.pvdata.pv.PVField;
 import org.epics.pvdata.pv.PVScalarArray;
@@ -11,11 +15,15 @@ import org.epics.pvdata.pv.PVUnion;
 import org.epics.pvdata.pv.PVUnionArray;
 import org.epics.pvdata.pv.Scalar;
 import org.epics.pvdata.pv.ScalarType;
+import org.epics.pvdata.pv.SerializableControl;
 import org.epics.pvdata.pv.StringArrayData;
 import org.epics.pvdata.pv.StructureArrayData;
 import org.epics.pvdata.pv.UnionArrayData;
 
-public final class PVDataSerializationSize {
+public final class PVDataSerialization {
+
+	public static final SerializableControl NOOP_SERIALIZABLE_CONTROL = new NoopSerializableControl();
+	public static final DeserializableControl NOOP_DESERIALIZABLE_CONTROL = new NoopDeserializableControl();
 
 	public static final int[] scalarSize = {
 		1, // pvBoolean
@@ -145,5 +153,50 @@ public final class PVDataSerializationSize {
 			return size;
 		}
 	}
+
+	static class NoopDeserializableControl implements DeserializableControl
+	{
+
+		@Override
+		public void ensureData(int size) {
+			// noop
+		}
+
+		@Override
+		public void alignData(int alignment) {
+			// TODO
+		}
+
+		@Override
+		public Field cachedDeserialize(ByteBuffer buffer) {
+			return PVFactory.getFieldCreate().deserialize(buffer, this);
+		}
+	}
+
+	static class NoopSerializableControl implements SerializableControl
+	{
+
+		@Override
+		public void flushSerializeBuffer() {
+			// noop
+		}
+
+		@Override
+		public void ensureBuffer(int size) {
+			// noop
+		}
+
+		@Override
+		public void alignBuffer(int alignment) {
+			// TODO
+		}
+
+		@Override
+		public void cachedSerialize(Field field, ByteBuffer buffer) {
+			field.serialize(buffer, this);
+		}
+		
+	}
+
 
 }

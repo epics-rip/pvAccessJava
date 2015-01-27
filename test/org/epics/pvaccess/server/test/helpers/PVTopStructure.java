@@ -123,7 +123,7 @@ public class PVTopStructure implements Lockable
 					Writer writer = new StringWriter();
 					PrintWriter printWriter = new PrintWriter(writer);
 					th.printStackTrace(printWriter);
-					pvStructure.message("Unexpected exception caught: " + writer, MessageType.fatalError);
+					//pvStructure.message("Unexpected exception caught: " + writer, MessageType.fatalError);
 				}
 			}
 		}

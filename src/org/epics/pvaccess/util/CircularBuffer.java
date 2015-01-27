@@ -15,7 +15,7 @@
 package org.epics.pvaccess.util;
 
 /**
- * Implementaton of circular FIFO buffer.
+ * Implementation of circular FIFO buffer.
  * If buffer is full, the oldest element is replaced with the new one.
  * Instance is not a bit synchronized.
  * @author <a href="mailto:matej.sekoranjaATcosylab.com">Matej Sekoranja</a>
@@ -67,7 +67,7 @@ public final class CircularBuffer<T> {
 	public int capacity() { return elements.length; }
 
 	/**
-	 * Insert a new element in to the buffer. If buffer full, oldest element will be overriden.
+	 * Insert a new element in to the buffer. If buffer full, oldest element will be overridden.
 	 * @param x element to insert.
 	 * @return overriden element, if any.
 	 */
