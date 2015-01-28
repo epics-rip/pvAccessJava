@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayDeque;
 import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -238,7 +237,7 @@ return null;
 	    	{
 		    	if (dataSize > buffer.capacity())
 		    		throw new RuntimeException("dataSize > buffer.capacity()");	// TODO different exception
-System.out.println(seqNo + " acquire, # of free buffers left:" + freeFragmentationBuffers.size());
+//System.out.println(seqNo + " acquire, # of free buffers left:" + freeFragmentationBuffers.size());
 		    	this.seqNo = seqNo;
 		    	this.fragmentSize = fragmentSize;
 		    	this.fragments = calculateFragmentCount(dataSize, fragmentSize);
@@ -291,7 +290,7 @@ System.out.println(seqNo + " acquire, # of free buffers left:" + freeFragmentati
 	    	// can be called from other thread !!!
 	    	void release()
 	    	{
-System.out.println(seqNo + " release");
+//System.out.println(seqNo + " release");
 				seqNo = 0;
 	    		synchronized (freeFragmentationBuffers) {
 	    			freeFragmentationBuffers.addLast(this);
@@ -300,7 +299,7 @@ System.out.println(seqNo + " release");
 	    	
 	    	void release(Iterator<FragmentationBufferEntry> iterator)
 	    	{
-System.out.println(seqNo + " release via iter");
+//System.out.println(seqNo + " release via iter");
 	    		iterator.remove();
 	    		seqNo = 0;
 	    		synchronized (freeFragmentationBuffers) {
@@ -446,6 +445,12 @@ System.out.println(seqNo + " release via iter");
 	    }
 	    
 	    
+	    public void noData()
+	    {
+	    	// TODO
+	    	if (missingSequenceNumbers.size() > 0)
+	    		checkAckNackCondition();
+	    }
 	    
 	    
 	    // not thread-safe
@@ -706,7 +711,7 @@ System.out.println(seqNo + " release via iter");
 							FragmentationBufferEntry entry = activeFragmentationBuffers.remove(firstFragmentSeqNo);
 							if (entry != null)
 							{
-								System.out.println(firstFragmentSeqNo + " passed");
+								//System.out.println(firstFragmentSeqNo + " passed");
 								entry.release();
 							}
 						}
@@ -723,7 +728,7 @@ System.out.println(seqNo + " release via iter");
 	
 										// remove from active fragmentation buffers map
 										activeFragmentationBuffers.remove(firstFragmentSeqNo);
-System.out.println(firstFragmentSeqNo + " completed");
+//System.out.println(firstFragmentSeqNo + " completed");
 
 										
 										// TODO out-of-order QoS

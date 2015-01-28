@@ -3,6 +3,8 @@ package org.epics.pvaccess.client.pvds.test;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.util.logging.Logger;
 
 import org.epics.pvaccess.client.pvds.Protocol.GUIDPrefix;
@@ -66,21 +68,46 @@ public class TestPVDS {
 		if (isRx)
 		{
 			final DatagramChannel discoveryMulticastChannel = rtpsReceiver.getDiscoveryMulticastChannel();
+			
+			
 		    new Thread(new Runnable() {
 		    	public void run() {
-		    	    ByteBuffer rxBuffer = ByteBuffer.allocate(64000);
+
 		    		try
 		    		{
-		    			while (true)
-		    			{
-		    				rxBuffer.clear();
-				    	    SocketAddress receivedFrom = discoveryMulticastChannel.receive(rxBuffer);
-				    	    rxBuffer.flip();
-				    	    rtpsReceiver.processMessage(receivedFrom, rxBuffer);
-		    			}
-		    		}
-		    		catch (Throwable th) 
-		    		{
+			    		discoveryMulticastChannel.configureBlocking(false);
+
+			    		Selector selector = Selector.open();
+			    		discoveryMulticastChannel.register(selector, SelectionKey.OP_READ);
+			    		
+			    	    ByteBuffer rxBuffer = ByteBuffer.allocate(64000);
+			    		try
+			    		{
+			    			while (true)
+			    			{
+			    				// TODO let decide on timeout, e.g. rtpsReceiver.waitTime();
+			    				int keys = selector.select(10);
+			    				if (keys == 0)
+			    				{
+			    					rtpsReceiver.noData();
+			    				}
+			    				else
+			    				{
+			    					// ACK all
+			    					selector.selectedKeys().clear();
+			    					
+				    				rxBuffer.clear();
+						    	    SocketAddress receivedFrom = discoveryMulticastChannel.receive(rxBuffer);
+						    	    rxBuffer.flip();
+						    	    rtpsReceiver.processMessage(receivedFrom, rxBuffer);
+			    				}
+			    			}
+			    		}
+			    		catch (Throwable th) 
+			    		{
+			    			th.printStackTrace();
+			    		}
+		    		} catch (Throwable th) {
 		    			th.printStackTrace();
 		    		}
 		    	}
@@ -247,11 +274,27 @@ public class TestPVDS {
 		    		{
 		    			((PVByteArray)rdata).get(0, 1, bad);
 		    			v = bad.data[0];
-		    			if ((byte)(prevv + 1) != v)
+		    			if ((byte)(prevv + 1) != v) {
+		    				System.out.println(prevv + " +1 (" + (prevv+1) + ") != " + v);
 		    				missedMessage++;
+		    			}
 		    			prevv = v;
+
 		    		}
-		    		System.out.printf("[%d] %.3f %d, missed messages: %d\n", v, rdata == null ? 0 : bw, rtpsReceiver.getStatistics().missedSN, missedMessage);
+		    		if (rdata != null)
+		    			System.out.printf("[%d] %.3f %d, missed messages: %d\n", v, rdata == null ? 0 : bw, rtpsReceiver.getStatistics().missedSN, missedMessage);
+					if (rdata == null || rtpsReceiver.getStatistics().missedSN > 0 ||
+							rtpsReceiver.getStatistics().lostSN > 0 ||
+							rtpsReceiver.getStatistics().ignoredSN > 0 )
+						System.out.println(rtpsReceiver.getStatistics());
+
+					
+					if (rdata == null)
+					{
+						System.err.println("message lost");
+		    			System.exit(1);
+					}
+					
 		    		rtpsReceiver.getStatistics().reset();
 		    	} catch (Throwable th) {
 		    		th.printStackTrace();
@@ -272,8 +315,8 @@ public class TestPVDS {
 		    	data.put(0, 1, countArray, 0);
 
 		    	tx.send(data);
-		    	tx.waitUntilReceived(clients, TIMEOUT);		// TODO what if ACK is lost (it happens!!!)
-		    	
+		    	if (tx.waitUntilReceived(clients, TIMEOUT) != clients);		// TODO what if ACK is lost (it happens!!!)
+		    		System.out.println(System.currentTimeMillis() + " / no ACK received");
 		    	//// 0.1GB/sec, 10MB...1/10s
 		    	//if (sleepTime > 0)
 		    	//	Thread.sleep(sleepTime);

@@ -421,6 +421,7 @@ public class RTPSMessageTransmitter extends RTPSMessageReceiver implements Seria
 			    			if (sendHeartbeatMessage())
 			    				messagesSinceLastHeartbeat = 0;
 			    		}
+			    		// TODO consider w/o "<< 1"
 			    		heartbeatTimeout = Math.min(heartbeatTimeout << 1, MAX_HEARTBEAT_TIMEOUT_MS);
 			    		continue;
 			    	}
