@@ -24,12 +24,12 @@ public interface PVAVersion {
     /**
      * Major version.
      */
-    public static final int VERSION_MAJOR = 4;
+    public static final int VERSION_MAJOR = 5;
     
     /**
      * Minor version.
      */
-    public static final int VERSION_MINOR = 2;
+    public static final int VERSION_MINOR = 0;
 
     /**
      * Maintenance version.
@@ -39,6 +39,6 @@ public interface PVAVersion {
     /**
      * Development version.
      */
-    public static final boolean VERSION_DEVELOPMENT = true;
+    public static final boolean VERSION_DEVELOPMENT = false;
 
 }
