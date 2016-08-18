@@ -71,6 +71,7 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
+                <!-- Use lower case for bundle name, make sun.misc resolution optional - as agreed upon with CS-Studio devs -->
                 <version>2.5.3</version>
                 <extensions>true</extensions>
                 <executions>
@@ -82,7 +83,14 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>org.epics.pvaccess</Bundle-SymbolicName>
+                        <Import-Package>sun.misc;resolution:=optional,*</Import-Package>
+                    </instructions>
+                </configuration>
             </plugin>
+
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.5</version>
