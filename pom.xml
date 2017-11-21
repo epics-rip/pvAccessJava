@@ -13,7 +13,11 @@
 
     <name>pvAccessJava</name>
     <url>https://github.com/epics-base/pvAccessJava</url>
-
+    <scm>
+    	<url>https://github.com/epics-base/pvAccessJava</url>
+    	<connection>scm:git:https://github.com/epics-base/pvAccessJava</connection>
+    	<developerConnection>scm:git:https://github.com/epics-base/pvAccessJava</developerConnection>
+    </scm>
     <!-- Explicitly declare snapshot repository -->
     <repositories>
         <repository>
